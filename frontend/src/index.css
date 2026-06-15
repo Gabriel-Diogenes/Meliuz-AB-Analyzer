@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink-950 text-ink-300 antialiased;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-white/10 bg-ink-900/80 backdrop-blur-xl shadow-card;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-ink-800/80 px-4 py-3 text-sm text-white placeholder:text-ink-500 outline-none transition focus:border-meliuz-500/60 focus:ring-2 focus:ring-meliuz-500/20;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-meliuz-600 to-meliuz-500 px-5 py-3 text-sm font-semibold text-white shadow-glow transition hover:from-meliuz-500 hover:to-meliuz-400 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-ink-800 px-4 py-2.5 text-sm font-medium text-white transition hover:border-meliuz-500/40 hover:bg-ink-700;
+  }
+
+  .section-title {
+    @apply font-display text-lg font-semibold text-white;
+  }
+
+  .markdown-report {
+    @apply max-w-none text-sm leading-relaxed text-ink-300;
+  }
+
+  .markdown-report h1,
+  .markdown-report h2,
+  .markdown-report h3 {
+    @apply font-display font-semibold text-meliuz-300;
+  }
+
+  .markdown-report h1 { @apply mb-4 mt-6 text-2xl; }
+  .markdown-report h2 { @apply mb-3 mt-5 text-xl; }
+  .markdown-report h3 { @apply mb-2 mt-4 text-lg; }
+
+  .markdown-report p { @apply mb-3; }
+  .markdown-report ul { @apply mb-3 list-disc space-y-1 pl-5; }
+  .markdown-report ol { @apply mb-3 list-decimal space-y-1 pl-5; }
+  .markdown-report strong { @apply text-white; }
+
+  .markdown-report table {
+    @apply mb-4 w-full border-collapse overflow-hidden rounded-lg text-left text-sm;
+  }
+
+  .markdown-report th {
+    @apply border border-white/10 bg-meliuz-900/30 px-3 py-2 font-semibold text-white;
+  }
+
+  .markdown-report td {
+    @apply border border-white/10 px-3 py-2;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #16161f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a4a;
+  border-radius: 999px;
+}
