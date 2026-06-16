@@ -22,8 +22,8 @@ import {
 import type { LinhaRastreamento, ResultadoAnalise } from './tipos'
 
 const ROTULOS_MODELO: Record<string, string> = {
+  'gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite (recomendado)',
   'gemini-3-flash-preview': 'Gemini 3.0 Flash',
-  'gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
 }
 
 function formatarMoeda(valor: number): string {
@@ -31,8 +31,8 @@ function formatarMoeda(valor: number): string {
 }
 
 export default function Aplicacao() {
-  const [modelo, setModelo] = useState('gemini-3-flash-preview')
-  const [modelos, setModelos] = useState<string[]>(['gemini-3-flash-preview', 'gemini-2.5-flash-lite'])
+  const [modelo, setModelo] = useState('gemini-2.5-flash-lite')
+  const [modelos, setModelos] = useState<string[]>(['gemini-2.5-flash-lite', 'gemini-3-flash-preview'])
   const [geminiConfigurado, setGeminiConfigurado] = useState(false)
   const [promptSistema, setPromptSistema] = useState('')
   const [promptAnalise, setPromptAnalise] = useState('')
@@ -41,6 +41,7 @@ export default function Aplicacao() {
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [arrastando, setArrastando] = useState(false)
   const [carregando, setCarregando] = useState(false)
+  const [mensagemCarregamento, setMensagemCarregamento] = useState('')
   const [resultado, setResultado] = useState<ResultadoAnalise | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [linhasRastreamento, setLinhasRastreamento] = useState<LinhaRastreamento[]>([])
@@ -97,6 +98,7 @@ export default function Aplicacao() {
 
     setCarregando(true)
     setErro(null)
+    setMensagemCarregamento('Enviando dados para analise...')
 
     const dadosFormulario = new FormData()
     dadosFormulario.append('arquivo', arquivo)
@@ -107,7 +109,10 @@ export default function Aplicacao() {
     dadosFormulario.append('prompt_analise', promptAnalise)
 
     try {
-      const analise = await analisarTeste(dadosFormulario)
+      const analise = await analisarTeste(dadosFormulario, (segundos) => {
+        const tempo = Math.round(segundos)
+        setMensagemCarregamento(`Gerando relatorio com Gemini... ${tempo}s (pode levar de 1 a 5 min)`)
+      })
       setResultado(analise)
       const rastreamento = await buscarRastreamento()
       setLinhasRastreamento(rastreamento.linhas)
@@ -117,6 +122,7 @@ export default function Aplicacao() {
       setErro(falha instanceof Error ? falha.message : 'Erro ao analisar o teste')
     } finally {
       setCarregando(false)
+      setMensagemCarregamento('')
     }
   }
 
@@ -258,11 +264,19 @@ export default function Aplicacao() {
             </div>
           </section>
 
+          <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-100/90">
+            <p className="font-medium text-amber-100">Tempo de processamento</p>
+            <p className="mt-1 text-amber-100/80">
+              A analise com Gemini pode levar de <strong>1 a 5 minutos</strong>, principalmente na demo online
+              (Render gratuito). Mantenha esta pagina aberta ate o relatorio aparecer.
+            </p>
+          </div>
+
           <button type="button" className="btn-primary w-full py-4 text-base" onClick={executarAnalise} disabled={carregando}>
             {carregando ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Analisando com Gemini...
+                {mensagemCarregamento || 'Analisando com Gemini...'}
               </>
             ) : (
               <>

@@ -66,6 +66,17 @@ def calcular_metricas(dataframe: pd.DataFrame) -> dict[str, Any]:
     if grupos_gmv_zero:
         qualidade_dados.append(f"Grupo(s) com GMV zero: {', '.join(grupos_gmv_zero)}.")
 
+    grupos_receita_nao_positiva = [
+        grupo["grupo"]
+        for grupo in metricas_por_grupo
+        if grupo["receita_liquida"] <= 0
+    ]
+    if grupos_receita_nao_positiva:
+        qualidade_dados.append(
+            "Grupo(s) com receita liquida zero ou negativa (cashback consome toda ou mais que a comissao): "
+            f"{', '.join(grupos_receita_nao_positiva)}."
+        )
+
     if dias < 7:
         qualidade_dados.append(f"Período curto ({dias} dia(s)); resultados podem ser inconclusivos.")
 
@@ -89,8 +100,9 @@ def calcular_metricas(dataframe: pd.DataFrame) -> dict[str, Any]:
 
 
 def metricas_para_contexto_prompt(metricas: dict[str, Any], avisos: list[str]) -> str:
+    metricas_resumidas = {chave: valor for chave, valor in metricas.items() if chave != "serie_diaria"}
     conteudo = {
         "avisos_preprocessamento": avisos,
-        "metricas": metricas,
+        "metricas": metricas_resumidas,
     }
     return json.dumps(conteudo, ensure_ascii=False, indent=2)

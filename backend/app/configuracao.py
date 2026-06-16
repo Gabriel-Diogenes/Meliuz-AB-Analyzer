@@ -6,8 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DIRETORIO_BACKEND = Path(__file__).resolve().parent.parent
 
 MODELOS_GEMINI_PERMITIDOS = (
-    "gemini-3-flash-preview",
     "gemini-2.5-flash-lite",
+    "gemini-3-flash-preview",
 )
 MODELO_GEMINI_PADRAO = MODELOS_GEMINI_PERMITIDOS[0]
 

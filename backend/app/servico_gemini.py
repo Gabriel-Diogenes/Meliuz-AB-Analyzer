@@ -52,7 +52,7 @@ def analisar_com_gemini(
         prompt_usuario,
         generation_config={
             "temperature": 0.3,
-            "max_output_tokens": 8192,
+            "max_output_tokens": 4096,
         },
     )
 

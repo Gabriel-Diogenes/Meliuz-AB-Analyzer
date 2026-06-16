@@ -45,15 +45,21 @@ export async function validarConexaoGemini(modelo = ''): Promise<{ status: strin
   return tratarResposta(resposta)
 }
 
-export async function analisarTeste(dadosFormulario: FormData): Promise<ResultadoAnalise> {
+export async function analisarTeste(
+  dadosFormulario: FormData,
+  onProgresso?: (segundosDecorridos: number) => void,
+): Promise<ResultadoAnalise> {
   const resposta = await fetch(`${BASE_API}/analyze`, {
     method: 'POST',
     body: dadosFormulario,
   })
   const inicio = await tratarResposta<{ job_id: string; status: string }>(resposta)
+  const intervaloMs = 1500
 
-  for (let tentativa = 0; tentativa < 120; tentativa += 1) {
-    await new Promise((resolver) => setTimeout(resolver, 2000))
+  for (let tentativa = 0; tentativa < 180; tentativa += 1) {
+    await new Promise((resolver) => setTimeout(resolver, intervaloMs))
+    onProgresso?.((tentativa + 1) * (intervaloMs / 1000))
+
     const statusResposta = await fetch(`${BASE_API}/analyze/jobs/${inicio.job_id}`)
     const status = await tratarResposta<{
       status: string

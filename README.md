@@ -52,7 +52,7 @@ Hospedagem **100% gratuita** com [Render](https://render.com) — um único link
 | Item | Comportamento |
 |------|----------------|
 | Primeira visita após inatividade | Pode levar ~30–60 s para “acordar” |
-| Análise com Gemini | Pode levar 1–2 min; a interface aguarda automaticamente |
+| Análise com Gemini | Pode levar 1–5 min; a interface mostra o tempo decorrido |
 | Relatórios e histórico | Ficam no disco efêmero — somem ao redeploy |
 | Google Sheets | Opcional; exige JSON da service account (não necessário para o teste) |
 
