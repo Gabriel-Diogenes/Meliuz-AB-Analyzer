@@ -72,7 +72,8 @@ def executar_analise_completa(
             "resultado": resumo_resultado,
             "decisao": resultado_ia["decisao"],
             "arquivo": nome_arquivo or "dataset.csv",
-        }
+        },
+        metricas=metricas,
     )
 
     return {

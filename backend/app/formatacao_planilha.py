@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 CABECALHOS_PLANILHA = [
-    "Data da analise",
+    "Data",
     "Nome do teste",
     "Descricao",
     "Parceiro",
@@ -12,7 +12,7 @@ CABECALHOS_PLANILHA = [
     "Variantes",
     "Resultado",
     "Decisao",
-    "Arquivo",
+    "Arquivo CSV",
 ]
 
 
@@ -24,6 +24,11 @@ def _limpar_markdown(texto: str) -> str:
     limpo = re.sub(r"^\s*[-*]\s+", "", limpo, flags=re.MULTILINE)
     limpo = limpo.replace("→", " ate ")
     return " ".join(limpo.split())
+
+
+def _formatar_moeda(valor: float) -> str:
+    texto = f"{valor:,.2f}"
+    return "R$ " + texto.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 def _extrair_grupo(texto: str) -> str:
@@ -50,6 +55,19 @@ def _primeira_frase(texto: str, limite: int = 220) -> str:
     return resumo[:limite]
 
 
+def montar_resultado_das_metricas(metricas: dict[str, Any]) -> str:
+    partes: list[str] = []
+    for grupo in metricas.get("metricas_por_grupo", []):
+        receita = float(grupo.get("receita_liquida", 0))
+        gmv = float(grupo.get("gmv", 0))
+        margem = float(grupo.get("margem_liquida_sobre_gmv", 0))
+        nome = str(grupo.get("grupo", ""))
+        partes.append(
+            f"{nome}: receita {_formatar_moeda(receita)}, GMV {_formatar_moeda(gmv)}, margem {margem:.1f}%"
+        )
+    return " | ".join(partes)[:480]
+
+
 def formatar_decisao_planilha(decisao: str) -> str:
     limpo = _limpar_markdown(decisao)
     grupo = _extrair_grupo(limpo)
@@ -64,16 +82,28 @@ def formatar_decisao_planilha(decisao: str) -> str:
     return _primeira_frase(limpo, 280)
 
 
-def formatar_resultado_planilha(resultado: str, decisao: str) -> str:
+def formatar_resultado_planilha(
+    resultado: str,
+    decisao: str,
+    metricas: dict[str, Any] | None = None,
+) -> str:
+    if metricas and metricas.get("metricas_por_grupo"):
+        resumo_metricas = montar_resultado_das_metricas(metricas)
+        if resumo_metricas:
+            return resumo_metricas
     limpo = _limpar_markdown(resultado)
     if limpo:
         return _primeira_frase(limpo, 280)
     return formatar_decisao_planilha(decisao)
 
 
-def montar_valores_planilha(linha: dict[str, Any]) -> list[str]:
+def montar_valores_planilha(linha: dict[str, Any], metricas: dict[str, Any] | None = None) -> list[str]:
     decisao = formatar_decisao_planilha(str(linha.get("decisao", "")))
-    resultado = formatar_resultado_planilha(str(linha.get("resultado", "")), str(linha.get("decisao", "")))
+    resultado = formatar_resultado_planilha(
+        str(linha.get("resultado", "")),
+        str(linha.get("decisao", "")),
+        metricas,
+    )
     return [
         str(linha.get("data_analise", "")),
         str(linha.get("nome_teste", "")),

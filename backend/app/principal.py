@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app.configuracao import MODELO_GEMINI_PADRAO, MODELOS_GEMINI_PERMITIDOS, configuracoes
 from app.credenciais_google import diagnosticar_google_sheets, google_sheets_configurado
+from app.rastreador import reformatar_planilha_google
 from app.prompts_padrao import PROMPT_ANALISE_PADRAO, PROMPT_SISTEMA_PADRAO
 from app.rastreador import ler_linhas_rastreamento
 from app.servico_gemini import validar_chave_api
@@ -99,6 +100,11 @@ def validar_chave(requisicao: RequisicaoValidacaoChave) -> dict[str, str]:
 @aplicacao.get("/api/sheets/diagnostico")
 def diagnosticar_planilha_google() -> dict:
     return diagnosticar_google_sheets()
+
+
+@aplicacao.post("/api/sheets/formatar")
+def formatar_planilha_google() -> dict:
+    return reformatar_planilha_google()
 
 
 @aplicacao.get("/api/tracking")
