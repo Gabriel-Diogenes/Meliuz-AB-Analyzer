@@ -71,6 +71,20 @@ def ler_linhas_rastreamento(caminho_csv: str | None = None) -> list[dict[str, st
         return list(csv.DictReader(arquivo))
 
 
+def _texto_celula_planilha(texto: str, limite: int = 500) -> str:
+    return " ".join(str(texto).split())[:limite]
+
+
+def _garantir_cabecalhos_planilha(planilha) -> None:
+    cabecalhos_atuais = [cabecalho.strip() for cabecalho in planilha.row_values(1) if cabecalho.strip()]
+    if cabecalhos_atuais != CABECALHOS_RASTREAMENTO:
+        planilha.update(
+            [CABECALHOS_RASTREAMENTO],
+            "A1",
+            value_input_option="USER_ENTERED",
+        )
+
+
 def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
     if not google_sheets_configurado():
         return {
@@ -87,13 +101,14 @@ def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
         cliente = gspread.authorize(credenciais)
         planilha = cliente.open_by_key(configuracoes.id_planilha_google.strip()).sheet1
 
-        cabecalhos_atuais = [cabecalho.strip() for cabecalho in planilha.row_values(1) if cabecalho.strip()]
-        if not cabecalhos_atuais:
-            planilha.update("A1", [CABECALHOS_RASTREAMENTO])
-        elif cabecalhos_atuais != CABECALHOS_RASTREAMENTO:
-            planilha.update("A1", [CABECALHOS_RASTREAMENTO])
+        _garantir_cabecalhos_planilha(planilha)
 
-        valores = [str(linha.get(coluna, "")) for coluna in CABECALHOS_RASTREAMENTO]
+        linha_planilha = {
+            **linha,
+            "resultado": _texto_celula_planilha(linha.get("resultado", "")),
+            "decisao": _texto_celula_planilha(linha.get("decisao", "")),
+        }
+        valores = [str(linha_planilha.get(coluna, "")) for coluna in CABECALHOS_RASTREAMENTO]
         planilha.append_row(valores, value_input_option="USER_ENTERED")
         return {"status": "ok", "mensagem": "Linha registrada no Google Sheets."}
     except Exception as erro:
