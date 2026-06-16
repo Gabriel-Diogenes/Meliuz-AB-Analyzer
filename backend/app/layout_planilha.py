@@ -72,9 +72,14 @@ def _formato_linha_dados(cor_fundo: dict[str, float], negrito_decisao: bool = Fa
     return formato
 
 
+def ultima_linha_com_dados(planilha) -> int:
+    """Ultima linha preenchida na coluna A (nao confundir com row_count da grade)."""
+    return len(planilha.col_values(1))
+
+
 def aplicar_layout_planilha(planilha, *, ultima_linha: int | None = None) -> None:
     """Aplica cabecalho, larguras, cores e bordas na propria planilha Google."""
-    linha_final = ultima_linha or planilha.row_count
+    linha_final = ultima_linha if ultima_linha is not None else ultima_linha_com_dados(planilha)
     if linha_final < 1:
         linha_final = 1
 

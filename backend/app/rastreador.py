@@ -8,7 +8,7 @@ from typing import Any
 from app.configuracao import configuracoes
 from app.credenciais_google import google_sheets_configurado
 from app.formatacao_planilha import montar_valores_planilha
-from app.layout_planilha import aplicar_layout_planilha
+from app.layout_planilha import aplicar_layout_planilha, ultima_linha_com_dados
 
 CABECALHOS_RASTREAMENTO = [
     "data_analise",
@@ -93,9 +93,10 @@ def reformatar_planilha_google() -> dict[str, str]:
     try:
         planilha = _abrir_aba_principal()
         aplicar_layout_planilha(planilha)
+        total = ultima_linha_com_dados(planilha)
         return {
             "status": "ok",
-            "mensagem": f"Planilha reformatada ({planilha.row_count} linha(s)).",
+            "mensagem": f"Planilha reformatada ({total} linha(s) com dados).",
         }
     except Exception as erro:
         return {"status": "erro", "mensagem": f"Falha ao reformatar planilha: {erro}"}
@@ -114,9 +115,9 @@ def tentar_adicionar_planilha_google(
     try:
         planilha = _abrir_aba_principal()
         valores = montar_valores_planilha(linha, metricas)
-        proxima_linha = planilha.row_count + 1
-        planilha.update([valores], f"A{proxima_linha}:I{proxima_linha}", value_input_option="USER_ENTERED")
-        aplicar_layout_planilha(planilha, ultima_linha=proxima_linha)
+        planilha.append_row(valores, value_input_option="USER_ENTERED", table_range="A1")
+        linha_inserida = ultima_linha_com_dados(planilha)
+        aplicar_layout_planilha(planilha, ultima_linha=linha_inserida)
         return {"status": "ok", "mensagem": "Linha registrada no Google Sheets."}
     except Exception as erro:
         return {"status": "erro", "mensagem": f"Falha ao escrever no Sheets: {erro}"}
