@@ -27,6 +27,7 @@ function normalizarRastreamento(dados: Record<string, unknown>): DadosRastreamen
     csv_existe: Boolean(dados.csv_existe ?? dados.csv_exists),
     planilha_google_configurada: Boolean(dados.planilha_google_configurada ?? dados.google_sheets_configured),
     url_planilha_google: String(dados.url_planilha_google ?? dados.google_sheets_url ?? ''),
+    status_planilha: (dados.status_planilha ?? dados.sheets_status) as DadosRastreamento['status_planilha'],
   }
 }
 

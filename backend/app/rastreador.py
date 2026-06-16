@@ -87,10 +87,11 @@ def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
         cliente = gspread.authorize(credenciais)
         planilha = cliente.open_by_key(configuracoes.id_planilha_google.strip()).sheet1
 
-        cabecalhos = planilha.row_values(1)
-        if not cabecalhos:
-            planilha.append_row(CABECALHOS_RASTREAMENTO)
-            cabecalhos = CABECALHOS_RASTREAMENTO
+        cabecalhos_atuais = [cabecalho.strip() for cabecalho in planilha.row_values(1) if cabecalho.strip()]
+        if not cabecalhos_atuais:
+            planilha.update("A1", [CABECALHOS_RASTREAMENTO])
+        elif cabecalhos_atuais != CABECALHOS_RASTREAMENTO:
+            planilha.update("A1", [CABECALHOS_RASTREAMENTO])
 
         valores = [str(linha.get(coluna, "")) for coluna in CABECALHOS_RASTREAMENTO]
         planilha.append_row(valores, value_input_option="USER_ENTERED")

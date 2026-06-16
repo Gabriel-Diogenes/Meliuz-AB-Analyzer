@@ -54,6 +54,7 @@ export interface DadosRastreamento {
   csv_existe?: boolean
   planilha_google_configurada: boolean
   url_planilha_google: string
+  status_planilha?: { status: string; mensagem: string; email_conta_servico?: string }
 }
 
 export interface PromptsPadrao {

@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.configuracao import MODELO_GEMINI_PADRAO, MODELOS_GEMINI_PERMITIDOS, configuracoes
-from app.credenciais_google import google_sheets_configurado
+from app.credenciais_google import diagnosticar_google_sheets, google_sheets_configurado
 from app.prompts_padrao import PROMPT_ANALISE_PADRAO, PROMPT_SISTEMA_PADRAO
 from app.rastreador import ler_linhas_rastreamento
 from app.servico_gemini import validar_chave_api
@@ -96,6 +96,11 @@ def validar_chave(requisicao: RequisicaoValidacaoChave) -> dict[str, str]:
         raise HTTPException(status_code=400, detail=str(erro)) from erro
 
 
+@aplicacao.get("/api/sheets/diagnostico")
+def diagnosticar_planilha_google() -> dict:
+    return diagnosticar_google_sheets()
+
+
 @aplicacao.get("/api/tracking")
 def obter_rastreamento() -> dict:
     linhas = ler_linhas_rastreamento()
@@ -109,6 +114,10 @@ def obter_rastreamento() -> dict:
         "url_planilha_google": (
             f"https://docs.google.com/spreadsheets/d/{id_planilha}/edit?usp=sharing" if id_planilha else ""
         ),
+        "status_planilha": diagnosticar_google_sheets() if google_sheets_configurado() else {
+            "status": "ignorado",
+            "mensagem": "Google Sheets nao configurado.",
+        },
     }
 
 

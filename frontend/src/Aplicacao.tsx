@@ -46,6 +46,7 @@ export default function Aplicacao() {
   const [erro, setErro] = useState<string | null>(null)
   const [linhasRastreamento, setLinhasRastreamento] = useState<LinhaRastreamento[]>([])
   const [urlPlanilhaGoogle, setUrlPlanilhaGoogle] = useState('')
+  const [statusPlanilha, setStatusPlanilha] = useState<{ status: string; mensagem: string } | null>(null)
 
   useEffect(() => {
     buscarPromptsPadrao()
@@ -64,6 +65,7 @@ export default function Aplicacao() {
       .then((dados) => {
         setLinhasRastreamento(dados.linhas)
         setUrlPlanilhaGoogle(dados.url_planilha_google)
+        setStatusPlanilha(dados.status_planilha ?? null)
       })
       .catch(() => undefined)
   }, [])
@@ -114,9 +116,11 @@ export default function Aplicacao() {
         setMensagemCarregamento(`Gerando relatorio com Gemini... ${tempo}s (pode levar de 1 a 5 min)`)
       })
       setResultado(analise)
+      setStatusPlanilha(analise.status_planilha)
       const rastreamento = await buscarRastreamento()
       setLinhasRastreamento(rastreamento.linhas)
       setUrlPlanilhaGoogle(rastreamento.url_planilha_google)
+      setStatusPlanilha(rastreamento.status_planilha ?? analise.status_planilha)
     } catch (falha) {
       setResultado(null)
       setErro(falha instanceof Error ? falha.message : 'Erro ao analisar o teste')
@@ -327,6 +331,16 @@ export default function Aplicacao() {
                     </ul>
                   </div>
                 )}
+                {resultado.status_planilha && (
+                  <div className={`mt-4 rounded-xl border p-3 text-sm ${
+                    resultado.status_planilha.status === 'ok'
+                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                      : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                  }`}>
+                    <p className="font-medium">Google Sheets</p>
+                    <p className="mt-1">{resultado.status_planilha.mensagem}</p>
+                  </div>
+                )}
               </section>
 
               <section className="glass-card max-h-[640px] overflow-y-auto p-6">
@@ -361,6 +375,12 @@ export default function Aplicacao() {
                 </a>
               ) : null}
             </div>
+            {statusPlanilha && statusPlanilha.status !== 'ok' && (
+              <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+                <p className="font-medium">Status Google Sheets</p>
+                <p className="mt-1">{statusPlanilha.mensagem}</p>
+              </div>
+            )}
             {linhasRastreamento.length === 0 ? (
               <p className="text-sm text-ink-500">
                 Nenhum teste registrado ainda. Os resultados sao salvos em{' '}
