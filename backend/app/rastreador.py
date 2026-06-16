@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from app.configuracao import configuracoes
+from app.credenciais_google import google_sheets_configurado
 
 CABECALHOS_RASTREAMENTO = [
     "data_analise",
@@ -71,7 +72,7 @@ def ler_linhas_rastreamento(caminho_csv: str | None = None) -> list[dict[str, st
 
 
 def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
-    if not configuracoes.id_planilha_google or not configuracoes.json_conta_servico_google:
+    if not google_sheets_configurado():
         return {
             "status": "ignorado",
             "mensagem": "Google Sheets não configurado. Usando CSV local.",
@@ -79,18 +80,12 @@ def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
 
     try:
         import gspread
-        from google.oauth2.service_account import Credentials
 
-        escopos = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
-        ]
-        credenciais = Credentials.from_service_account_file(
-            configuracoes.json_conta_servico_google,
-            scopes=escopos,
-        )
+        from app.credenciais_google import obter_credenciais_google
+
+        credenciais = obter_credenciais_google()
         cliente = gspread.authorize(credenciais)
-        planilha = cliente.open_by_key(configuracoes.id_planilha_google).sheet1
+        planilha = cliente.open_by_key(configuracoes.id_planilha_google.strip()).sheet1
 
         cabecalhos = planilha.row_values(1)
         if not cabecalhos:

@@ -221,17 +221,57 @@ Arquivo: `backend/.env` (crie a partir de `.env.example`)
 
 Para registrar os testes direto no Google Sheets:
 
-1. Crie uma planilha no Google Sheets
-2. Copie o ID da URL: `https://docs.google.com/spreadsheets/d/ESTE_ID/edit`
-3. Crie uma service account no Google Cloud (APIs: Sheets + Drive)
-4. Baixe o JSON e coloque em `backend/` (ex.: `service-account.json`)
-5. Compartilhe a planilha com o e-mail da service account como **Editor**
-6. Preencha no `.env`:
+### Passo 1 — Criar a planilha
+
+1. Crie uma planilha em [Google Sheets](https://sheets.google.com)
+2. Copie o **ID** da URL:  
+   `https://docs.google.com/spreadsheets/d/ESTE_ID/edit`
+
+### Passo 2 — Service account no Google Cloud
+
+1. Acesse [Google Cloud Console](https://console.cloud.google.com)
+2. Crie um projeto (ou use um existente)
+3. Ative as APIs **Google Sheets API** e **Google Drive API**
+4. Vá em **IAM e administrador → Contas de serviço → Criar conta de serviço**
+5. Baixe a chave JSON (**Chaves → Adicionar chave → JSON**)
+6. Abra o JSON e copie o e-mail em `"client_email"` (ex.: `...@....iam.gserviceaccount.com`)
+
+### Passo 3 — Compartilhar a planilha
+
+1. Na planilha, clique em **Compartilhar**
+2. Cole o e-mail da service account
+3. Permissão: **Editor**
+
+### Passo 4 — Configurar variáveis
+
+#### Local (`backend/.env`)
+
+**Opção A — arquivo JSON** (coloque o arquivo em `backend/`):
 
 ```env
 GOOGLE_SHEETS_ID=id_da_planilha
 GOOGLE_SERVICE_ACCOUNT_JSON=service-account.json
 ```
+
+**Opção B — JSON inline** (cole o conteúdo inteiro do arquivo):
+
+```env
+GOOGLE_SHEETS_ID=id_da_planilha
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
+```
+
+#### Render (produção)
+
+No painel do serviço **meliuz-ab-analyzer → Environment**:
+
+| Variável | Valor |
+|----------|-------|
+| `GOOGLE_SHEETS_ID` | ID da planilha |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Cole o **JSON inteiro** da service account (uma linha) |
+
+Salve e aguarde o redeploy. Na interface, deve aparecer o botão **"Abrir Google Sheets"** no histórico.
+
+> **Nunca** commite o arquivo JSON no Git. Ele já está no `.gitignore`.
 
 Sem essa configuração, o sistema funciona normalmente e grava só no CSV local.
 

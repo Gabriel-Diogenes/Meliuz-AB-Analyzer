@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.configuracao import MODELO_GEMINI_PADRAO, MODELOS_GEMINI_PERMITIDOS, configuracoes
+from app.credenciais_google import google_sheets_configurado
 from app.prompts_padrao import PROMPT_ANALISE_PADRAO, PROMPT_SISTEMA_PADRAO
 from app.rastreador import ler_linhas_rastreamento
 from app.servico_gemini import validar_chave_api
@@ -104,7 +105,7 @@ def obter_rastreamento() -> dict:
         "linhas": linhas,
         "caminho_csv": str(caminho.resolve()),
         "csv_existe": caminho.exists(),
-        "planilha_google_configurada": bool(id_planilha),
+        "planilha_google_configurada": google_sheets_configurado(),
         "url_planilha_google": (
             f"https://docs.google.com/spreadsheets/d/{id_planilha}/edit?usp=sharing" if id_planilha else ""
         ),
