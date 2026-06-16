@@ -50,5 +50,6 @@ def salvar_relatorio(
 def montar_resumo_resultado(relatorio_markdown: str, decisao: str) -> str:
     linhas = [linha.strip("- ").strip() for linha in relatorio_markdown.splitlines() if linha.strip().startswith("-")]
     if linhas:
-        return " | ".join(linhas[:3])
-    return decisao[:280]
+        resumo = " | ".join(linhas[:3])
+        return re.sub(r"\*\*(.+?)\*\*", r"\1", resumo)
+    return re.sub(r"\*\*(.+?)\*\*", r"\1", decisao)[:280]

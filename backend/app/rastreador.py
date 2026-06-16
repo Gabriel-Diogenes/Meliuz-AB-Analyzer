@@ -7,6 +7,7 @@ from typing import Any
 
 from app.configuracao import configuracoes
 from app.credenciais_google import google_sheets_configurado
+from app.formatacao_planilha import CABECALHOS_PLANILHA, montar_valores_planilha
 
 CABECALHOS_RASTREAMENTO = [
     "data_analise",
@@ -71,25 +72,41 @@ def ler_linhas_rastreamento(caminho_csv: str | None = None) -> list[dict[str, st
         return list(csv.DictReader(arquivo))
 
 
-def _texto_celula_planilha(texto: str, limite: int = 500) -> str:
-    return " ".join(str(texto).split())[:limite]
-
-
 def _garantir_cabecalhos_planilha(planilha) -> None:
     cabecalhos_atuais = [cabecalho.strip() for cabecalho in planilha.row_values(1) if cabecalho.strip()]
-    if cabecalhos_atuais != CABECALHOS_RASTREAMENTO:
+    if cabecalhos_atuais != CABECALHOS_PLANILHA:
         planilha.update(
-            [CABECALHOS_RASTREAMENTO],
-            "A1",
+            [CABECALHOS_PLANILHA],
+            "A1:I1",
             value_input_option="USER_ENTERED",
         )
+        planilha.freeze(rows=1)
+        planilha.format(
+            "A1:I1",
+            {
+                "textFormat": {"bold": True},
+                "backgroundColor": {"red": 1.0, "green": 0.93, "blue": 0.84},
+                "horizontalAlignment": "CENTER",
+            },
+        )
+
+
+def _formatar_linha_planilha(planilha, numero_linha: int) -> None:
+    intervalo = f"A{numero_linha}:I{numero_linha}"
+    planilha.format(
+        intervalo,
+        {
+            "wrapStrategy": "WRAP",
+            "verticalAlignment": "TOP",
+        },
+    )
 
 
 def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
     if not google_sheets_configurado():
         return {
             "status": "ignorado",
-            "mensagem": "Google Sheets não configurado. Usando CSV local.",
+            "mensagem": "Google Sheets nao configurado. Usando CSV local.",
         }
 
     try:
@@ -103,13 +120,9 @@ def tentar_adicionar_planilha_google(linha: dict[str, Any]) -> dict[str, str]:
 
         _garantir_cabecalhos_planilha(planilha)
 
-        linha_planilha = {
-            **linha,
-            "resultado": _texto_celula_planilha(linha.get("resultado", "")),
-            "decisao": _texto_celula_planilha(linha.get("decisao", "")),
-        }
-        valores = [str(linha_planilha.get(coluna, "")) for coluna in CABECALHOS_RASTREAMENTO]
+        valores = montar_valores_planilha(linha)
         planilha.append_row(valores, value_input_option="USER_ENTERED")
+        _formatar_linha_planilha(planilha, planilha.row_count)
         return {"status": "ok", "mensagem": "Linha registrada no Google Sheets."}
     except Exception as erro:
         return {"status": "erro", "mensagem": f"Falha ao escrever no Sheets: {erro}"}
