@@ -50,7 +50,26 @@ export async function analisarTeste(dadosFormulario: FormData): Promise<Resultad
     method: 'POST',
     body: dadosFormulario,
   })
-  return tratarResposta(resposta)
+  const inicio = await tratarResposta<{ job_id: string; status: string }>(resposta)
+
+  for (let tentativa = 0; tentativa < 120; tentativa += 1) {
+    await new Promise((resolver) => setTimeout(resolver, 2000))
+    const statusResposta = await fetch(`${BASE_API}/analyze/jobs/${inicio.job_id}`)
+    const status = await tratarResposta<{
+      status: string
+      resultado?: ResultadoAnalise
+      erro?: string
+    }>(statusResposta)
+
+    if (status.status === 'completed' && status.resultado) {
+      return status.resultado
+    }
+    if (status.status === 'failed') {
+      throw new Error(status.erro || 'Erro ao analisar o teste')
+    }
+  }
+
+  throw new Error('Tempo limite da analise excedido. Tente novamente em alguns instantes.')
 }
 
 export async function buscarRastreamento(): Promise<DadosRastreamento> {

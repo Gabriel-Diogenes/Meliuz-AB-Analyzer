@@ -52,6 +52,7 @@ Hospedagem **100% gratuita** com [Render](https://render.com) — um único link
 | Item | Comportamento |
 |------|----------------|
 | Primeira visita após inatividade | Pode levar ~30–60 s para “acordar” |
+| Análise com Gemini | Pode levar 1–2 min; a interface aguarda automaticamente |
 | Relatórios e histórico | Ficam no disco efêmero — somem ao redeploy |
 | Google Sheets | Opcional; exige JSON da service account (não necessário para o teste) |
 
@@ -255,7 +256,8 @@ Sem essa configuração, o sistema funciona normalmente e grava só no CSV local
 | `/api/health` | GET | Health check |
 | `/api/prompts/defaults` | GET | Prompts e modelos disponíveis |
 | `/api/validate-key` | POST | Valida chave Gemini (usa `.env`) |
-| `/api/analyze` | POST | Analisa CSV (multipart) |
+| `/api/analyze` | POST | Inicia analise assincrona (retorna `job_id`) |
+| `/api/analyze/jobs/{job_id}` | GET | Consulta status/resultado da analise |
 | `/api/tracking` | GET | Lista testes registrados |
 | `/api/reports/{arquivo}` | GET | Download de relatório |
 

@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.analisador_csv import carregar_dataset_ab
 from app.configuracao import MODELO_GEMINI_PADRAO, MODELOS_GEMINI_PERMITIDOS, configuracoes
-from app.gerador_relatorio import montar_resumo_resultado, salvar_relatorio
-from app.metricas import calcular_metricas, metricas_para_contexto_prompt
 from app.prompts_padrao import PROMPT_ANALISE_PADRAO, PROMPT_SISTEMA_PADRAO
-from app.rastreador import adicionar_linha_rastreamento, ler_linhas_rastreamento, tentar_adicionar_planilha_google
-from app.servico_gemini import analisar_com_gemini, validar_chave_api
+from app.rastreador import ler_linhas_rastreamento
+from app.servico_gemini import validar_chave_api
+from app.tarefas_analise import criar_tarefa, executar_tarefa_analise, obter_tarefa
 
 aplicacao = FastAPI(
     title="Méliuz Growth A/B Analyzer",
@@ -125,6 +122,7 @@ def baixar_relatorio(nome_arquivo: str):
 
 @aplicacao.post("/api/analyze")
 async def analisar_teste_ab(
+    background_tasks: BackgroundTasks,
     arquivo: UploadFile = File(...),
     nome_teste: str = Form(...),
     descricao_teste: str = Form(""),
@@ -139,76 +137,30 @@ async def analisar_teste_ab(
     if not conteudo:
         raise HTTPException(status_code=400, detail="Arquivo CSV vazio.")
 
-    try:
-        dataframe, avisos = carregar_dataset_ab(conteudo, arquivo.filename or "dataset.csv")
-        metricas = calcular_metricas(dataframe)
-        contexto_metricas = metricas_para_contexto_prompt(metricas, avisos)
-
-        resultado_ia = analisar_com_gemini(
-            chave_api=chave_resolvida,
-            nome_modelo=modelo_resolvido,
-            prompt_sistema=prompt_sistema or PROMPT_SISTEMA_PADRAO,
-            prompt_analise=prompt_analise or PROMPT_ANALISE_PADRAO,
-            nome_teste=nome_teste,
-            descricao_teste=descricao_teste,
-            contexto_metricas=contexto_metricas,
-        )
-
-        caminho_md, caminho_html = salvar_relatorio(
-            diretorio_relatorios=configuracoes.diretorio_relatorios,
-            nome_teste=nome_teste,
-            relatorio_markdown=resultado_ia["relatorio_markdown"],
-        )
-
-        resumo_resultado = montar_resumo_resultado(resultado_ia["relatorio_markdown"], resultado_ia["decisao"])
-        periodo = f"{metricas['periodo']['inicio']} → {metricas['periodo']['fim']}"
-        variantes = ", ".join(metricas["grupos"])
-
-        caminho_rastreamento = adicionar_linha_rastreamento(
-            nome_teste=nome_teste,
-            descricao=descricao_teste,
-            parceiro=metricas["parceiro"],
-            periodo=periodo,
-            variantes=variantes,
-            resumo_resultado=resumo_resultado,
-            decisao=resultado_ia["decisao"],
-            nome_arquivo=arquivo.filename or "dataset.csv",
-        )
-
-        resultado_planilha = tentar_adicionar_planilha_google(
-            {
-                "data_analise": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "nome_teste": nome_teste,
-                "descricao": descricao_teste,
-                "parceiro": metricas["parceiro"],
-                "periodo": periodo,
-                "variantes": variantes,
-                "resultado": resumo_resultado,
-                "decisao": resultado_ia["decisao"],
-                "arquivo": arquivo.filename or "dataset.csv",
-            }
-        )
-
-        return {
-            "sucesso": True,
+    job_id = criar_tarefa()
+    background_tasks.add_task(
+        executar_tarefa_analise,
+        job_id,
+        {
+            "conteudo_csv": conteudo,
+            "nome_arquivo": arquivo.filename or "dataset.csv",
+            "chave_gemini": chave_resolvida,
+            "modelo": modelo_resolvido,
             "nome_teste": nome_teste,
-            "metricas": metricas,
-            "avisos": avisos,
-            "relatorio_markdown": resultado_ia["relatorio_markdown"],
-            "decisao": resultado_ia["decisao"],
-            "resumo_resultado": resumo_resultado,
-            "modelo_utilizado": resultado_ia["modelo"],
-            "arquivos_relatorio": {
-                "markdown": caminho_md.name,
-                "html": caminho_html.name,
-            },
-            "csv_rastreamento": str(caminho_rastreamento.resolve()),
-            "status_planilha": resultado_planilha,
-        }
-    except ValueError as erro:
-        raise HTTPException(status_code=400, detail=str(erro)) from erro
-    except Exception as erro:
-        raise HTTPException(status_code=500, detail=f"Erro na análise: {erro}") from erro
+            "descricao_teste": descricao_teste,
+            "prompt_sistema": prompt_sistema,
+            "prompt_analise": prompt_analise,
+        },
+    )
+    return {"job_id": job_id, "status": "processing"}
+
+
+@aplicacao.get("/api/analyze/jobs/{job_id}")
+def obter_status_analise(job_id: str) -> dict:
+    tarefa = obter_tarefa(job_id)
+    if not tarefa:
+        raise HTTPException(status_code=404, detail="Tarefa de analise nao encontrada.")
+    return tarefa
 
 
 DIRETORIO_STATIC = Path(__file__).resolve().parent.parent / "static"
