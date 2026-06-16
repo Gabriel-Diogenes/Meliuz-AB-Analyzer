@@ -12,20 +12,30 @@ function Test-Command($name) {
     return [bool](Get-Command $name -ErrorAction SilentlyContinue)
 }
 
-if (-not (Test-Command python)) { throw "Python nao encontrado. Instale Python 3.11+." }
+$pythonCmd = $null
+if (Test-Command python) { $pythonCmd = "python" }
+elseif (Test-Command py) {
+    try {
+        & py -3 -c "import sys" 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { $pythonCmd = "py -3" }
+    } catch { }
+    if (-not $pythonCmd) { $pythonCmd = "py" }
+}
+if (-not $pythonCmd) { throw "Python nao encontrado. Instale Python 3.11+." }
 if (-not (Test-Command node)) { throw "Node.js nao encontrado. Instale Node.js 18+." }
 
 $venvPython = Join-Path $Root "backend\.venv\Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
     Write-Host "[SETUP] Criando ambiente Python..." -ForegroundColor Cyan
-    python -m venv (Join-Path $Root "backend\.venv")
+    Invoke-Expression "$pythonCmd -m venv `"$(Join-Path $Root 'backend\.venv')`""
     & (Join-Path $Root "backend\.venv\Scripts\pip.exe") install -r (Join-Path $Root "backend\requirements.txt") -q
 }
 
-if (-not (Test-Path (Join-Path $Root "frontend\node_modules"))) {
+if (-not (Test-Path (Join-Path $Root "frontend\node_modules\.bin\vite.cmd"))) {
     Write-Host "[SETUP] Instalando dependencias do frontend..." -ForegroundColor Cyan
     Push-Location (Join-Path $Root "frontend")
     npm install
+    if ($LASTEXITCODE -ne 0) { throw "Falha ao instalar dependencias do frontend." }
     Pop-Location
 }
 

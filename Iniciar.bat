@@ -12,7 +12,8 @@ echo.
 
 set "PYCMD="
 where python >nul 2>&1 && set "PYCMD=python"
-if not defined PYCMD where py >nul 2>&1 && set "PYCMD=py -3.11"
+if not defined PYCMD where py >nul 2>&1 && set "PYCMD=py -3"
+if not defined PYCMD where py >nul 2>&1 && set "PYCMD=py"
 if not defined PYCMD (
     echo [ERRO] Python nao encontrado. Instale Python 3.11+ e tente novamente.
     pause
@@ -29,13 +30,29 @@ if errorlevel 1 (
 if not exist "backend\.venv\Scripts\python.exe" (
     echo [SETUP] Criando ambiente Python...
     %PYCMD% -m venv backend\.venv
+    if errorlevel 1 (
+        echo [ERRO] Falha ao criar ambiente Python. Verifique se Python 3.11+ esta instalado.
+        pause
+        exit /b 1
+    )
     call backend\.venv\Scripts\pip install -r backend\requirements.txt -q
+    if errorlevel 1 (
+        echo [ERRO] Falha ao instalar dependencias Python.
+        pause
+        exit /b 1
+    )
 )
 
-if not exist "frontend\node_modules" (
+if not exist "frontend\node_modules\.bin\vite.cmd" (
     echo [SETUP] Instalando dependencias do frontend...
     pushd frontend
     call npm install
+    if errorlevel 1 (
+        echo [ERRO] Falha ao instalar dependencias do frontend.
+        popd
+        pause
+        exit /b 1
+    )
     popd
 )
 

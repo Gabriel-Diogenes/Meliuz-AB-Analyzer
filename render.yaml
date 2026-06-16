@@ -1,0 +1,14 @@
+# Blueprint Render — deploy gratuito com um único link (frontend + backend).
+# Documentação: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: meliuz-ab-analyzer
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3-flash-preview

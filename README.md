@@ -6,6 +6,59 @@ Solução para análise automatizada de testes A/B de cashback do Méliuz, com i
 
 ---
 
+## Demo online (recomendado para o avaliador)
+
+A forma mais simples de testar é **abrir o link publicado** — sem instalar Python, Node ou rodar scripts locais.
+
+> **Demo:** _(cole aqui a URL do Render após publicar, ex.: `https://meliuz-ab-analyzer.onrender.com`)_
+
+1. Abra o link acima
+2. Aguarde ~30 s na primeira visita (plano gratuito “dorme” após inatividade)
+3. Confira o badge verde **"Gemini via backend/.env"**
+4. Faça upload de um CSV da pasta `data/` e clique em **Executar análise A/B**
+
+Os datasets de exemplo continuam no repositório em `data/` para download.
+
+### Como publicar gratuitamente no Render (para o candidato)
+
+Hospedagem **100% gratuita** com [Render](https://render.com) — um único link serve interface + API.
+
+#### Passo a passo
+
+1. **Suba o código para um repositório público no GitHub** (sem commitar o `.env`).
+
+2. Crie conta em [render.com](https://render.com) e conecte o GitHub.
+
+3. Clique em **New → Blueprint** e selecione o repositório.  
+   O arquivo `render.yaml` na raiz configura tudo automaticamente.
+
+   _Alternativa manual:_ **New → Web Service** → escolha o repo → **Language: Docker** → confirme o `Dockerfile` na raiz.
+
+4. Na tela de variáveis de ambiente, adicione:
+   ```
+   GEMINI_API_KEY=sua_chave_aqui
+   ```
+   Obtenha a chave em: https://aistudio.google.com/apikey  
+   **Nunca** commite a chave no Git.
+
+5. Clique em **Deploy**. Aguarde o build (~3–5 min na primeira vez).
+
+6. Copie a URL gerada (ex.: `https://meliuz-ab-analyzer.onrender.com`) e:
+   - Cole no campo **Demo** deste README
+   - Envie o link na entrega do teste
+
+#### Limitações do plano gratuito
+
+| Item | Comportamento |
+|------|----------------|
+| Primeira visita após inatividade | Pode levar ~30–60 s para “acordar” |
+| Relatórios e histórico | Ficam no disco efêmero — somem ao redeploy |
+| Google Sheets | Opcional; exige JSON da service account (não necessário para o teste) |
+
+> **Rodar localmente** continua disponível abaixo, caso o avaliador prefira inspecionar o código na máquina.
+
+---
+
 ## Guia rápido para o avaliador
 
 ### 1. Pré-requisitos
@@ -99,6 +152,7 @@ Rode uma análise para **cada um** dos três arquivos.
 
 ```
 meliuz-ab-analyzer/
+├── Dockerfile / render.yaml  # Deploy gratuito (Render) — um link só
 ├── Iniciar.bat / Parar.bat   # Atalhos para subir e parar tudo (Windows)
 ├── Iniciar.ps1               # Alternativa PowerShell
 ├── backend/
@@ -212,6 +266,7 @@ Sem essa configuração, o sistema funciona normalmente e grava só no CSV local
 Checklist sugerido para o candidato:
 
 - [ ] Repositório GitHub **público** com este README
+- [ ] **Link da demo online** no README (Render ou similar)
 - [ ] `.env` **não** commitado (use `.env.example` como referência)
 - [ ] 3 análises rodadas (Parceiros A, B e C)
 - [ ] Relatórios em `backend/output/reports/`

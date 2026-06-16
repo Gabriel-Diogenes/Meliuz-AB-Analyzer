@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.analisador_csv import carregar_dataset_ab
@@ -208,3 +209,27 @@ async def analisar_teste_ab(
         raise HTTPException(status_code=400, detail=str(erro)) from erro
     except Exception as erro:
         raise HTTPException(status_code=500, detail=f"Erro na análise: {erro}") from erro
+
+
+DIRETORIO_STATIC = Path(__file__).resolve().parent.parent / "static"
+
+
+def _montar_frontend_estatico() -> None:
+    if not DIRETORIO_STATIC.exists():
+        return
+
+    pasta_assets = DIRETORIO_STATIC / "assets"
+    if pasta_assets.exists():
+        aplicacao.mount("/assets", StaticFiles(directory=pasta_assets), name="assets")
+
+    @aplicacao.get("/{caminho:path}", include_in_schema=False)
+    async def servir_spa(caminho: str):
+        if caminho.startswith("api"):
+            raise HTTPException(status_code=404, detail="Not found")
+        alvo = DIRETORIO_STATIC / caminho
+        if alvo.is_file():
+            return FileResponse(alvo)
+        return FileResponse(DIRETORIO_STATIC / "index.html")
+
+
+_montar_frontend_estatico()
